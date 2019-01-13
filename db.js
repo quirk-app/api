@@ -1,7 +1,7 @@
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
 
-const url = 'mongodb+srv://quirkadmin:Mjcih1ABcglsbXmv@cluster0-allgm.mongodb.net/test?retryWrites=true'
+const url = 'mongodb+srv://quirkadmin:icdTdIRn7RuNJCM1@cluster0-allgm.mongodb.net/main?retryWrites=true'
 const dbName = 'main';
 
 function clientWrapper(operation) {
@@ -24,7 +24,7 @@ function clientWrapper(operation) {
       });
     });
   }, function(err) {
-    console.log("Encountered error");
+    console.log("Encountered error", err);
     return new Promise((_, err) => { err(); });
   });
 }
