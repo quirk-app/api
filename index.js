@@ -104,7 +104,7 @@ const resolvers = {
     newUser: (_, { input }) => {
       input.posts = [];
       input.votes = [];
-      bcrypt.hash(input.password, 10).then((hash)=>{
+      return bcrypt.hash(input.password, 10).then((hash)=>{
         // Generated password hash
         input.password = hash;
 
