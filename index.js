@@ -82,7 +82,7 @@ const resolvers = {
   Query: {
     user: () => harambe,
     login: (_, { credentials }) => {
-      return mongo.findOne("users", {username: credentials.username}).then(
+      return mongo.findOne("users", {username_lower: credentials.username.toLowerCase()}).then(
         (result) => {
           console.log(result);
           if(!result) return {success: false, error: "Username or password is incorrect.", user: null};
@@ -104,12 +104,15 @@ const resolvers = {
     newUser: (_, { input }) => {
       input.posts = [];
       input.votes = [];
+      input.username_lower = username.toLowerCase(); // unique case-insensitive names
+
       return bcrypt.hash(input.password, 10).then((hash)=>{
         // Generated password hash
         input.password = hash;
 
-        return mongo.findOne("users", {username: input.username}).then(
+        return mongo.findOne("users", {username_lower: input.username_lower}).then(
           (result) => {
+            console.log(result);
             if(!result) {
               return mongo.insertDocument("users", input).then(
                 function(result) {
