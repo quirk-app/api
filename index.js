@@ -85,12 +85,12 @@ const resolvers = {
       return mongo.findOne("users", {username: credentials.username}).then(
         (result) => {
           console.log(result);
-          if(!result) return {success: false, error: "No account with given username found.", user: null};
+          if(!result) return {success: false, error: "Username or password is incorrect.", user: null};
           return bcrypt.compare(credentials.password, result.password).then((res) => {
             if(res) {
               return {success: true, user: result};
             } else {
-              return {success: false, error: "Incorrect password attempt"};
+              return {success: false, error: "Username or password is incorrect."};
             }});
         },
         (err) => {
