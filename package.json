@@ -1,0 +1,26 @@
+{
+  "name": "quirk-api",
+  "version": "1.0.0",
+  "description": "internal GraphQL API endpoint",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/quirk-app/api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/quirk-app/api/issues"
+  },
+  "homepage": "https://github.com/quirk-app/api#readme",
+  "dependencies": {
+    "apollo-server": "^2.3.1",
+    "bcrypt": "^3.0.3",
+    "graphql": "^14.0.2",
+    "mongodb": "^3.1.10"
+  }
+}
