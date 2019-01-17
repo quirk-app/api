@@ -49,7 +49,7 @@ function findOne(db, table, query) {
 }
 
 function getUser(db, id, fields) {
-  return db.collection("users").findOne({_id: ObjectID(id)}, fields);
+  return db.collection("users").findOne({_id: ObjectID(id)}, {projection: fields});
 }
 
 module.exports = {

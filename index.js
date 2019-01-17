@@ -96,7 +96,7 @@ const resolvers = {
       return mongo.findOne("users", {username_lower: credentials.username.toLowerCase()}).then(
         (result) => {
           console.log(result);
-          if(!result) return {success: false, error: "Username or password is incorrect.", user: null};
+          if(!result) return {success: false, error: "Username or password is incorrect."};
           return bcrypt.compare(credentials.password, result.password).then((res) => {
             if(res) {
               return {
@@ -139,10 +139,10 @@ const resolvers = {
                 },
                 function(err) {
                   console.log(err);
-                  return {success: false, user: null, error: "Error encountered when attempting to create the account. Try again later."}; // ERROR
+                  return {success: false, error: "Error encountered when attempting to create the account. Try again later."}; // ERROR
                 }
               );
-            } else return {success: false, user: null, error: "An account has already been created with the given username."};
+            } else return {success: false, error: "An account has already been created with the given username."};
           },
           (err) => {
             console.log(err);
