@@ -1,4 +1,4 @@
-const MongoClient = require('mongodb').MongoClient;
+const {MongoClient, ObjectID} = require('mongodb');
 const assert = require('assert');
 const fs = require('fs');
 
@@ -48,6 +48,10 @@ function findOne(db, table, query) {
   return db.collection(table).findOne(query);
 }
 
+function getUser(db, id, fields) {
+  return db.collection("users").findOne({_id: ObjectID(id)}, fields);
+}
+
 module.exports = {
   insertDocuments: function(table, docs) {
     return clientWrapper((db) => insertDocuments(db, table, docs));
@@ -63,5 +67,9 @@ module.exports = {
 
   findOne: function(table, doc) {
     return clientWrapper((db) => findOne(db, table, doc));
+  },
+
+  getUser: function(id, fields) {
+    return clientWrapper((db) => getUser(db, id, fields));
   },
 };

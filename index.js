@@ -88,8 +88,11 @@ function getToken(data) {
 // schema.  We'll retrieve books from the "books" array above.
 const resolvers = {
   Query: {
-    user: () => harambe,
-    login: (_, { credentials }) => {
+    user: (obj, args, {user}) => {
+      if(!user) return null;
+      return user;
+    },
+    login: (obj, { credentials }) => {
       return mongo.findOne("users", {username_lower: credentials.username.toLowerCase()}).then(
         (result) => {
           console.log(result);
@@ -112,7 +115,7 @@ const resolvers = {
     }
   },
   Mutation: {
-    newUser: (_, { input }) => {
+    newUser: (obj, { input }) => {
       input.posts = [];
       input.votes = [];
       input.username_lower = input.username.toLowerCase(); // unique case-insensitive names
@@ -167,7 +170,7 @@ function verify(token, key) {
 const server = new ApolloServer({
   typeDefs,
   resolvers,
-  context: ({ req }) => {
+  context: async ({ req }) => {
     const token = req.headers.authorization || '';
     let res = verify(token, KEY_CUR) || verify(token, KEY_OLD);
     console.log(token);
@@ -175,6 +178,9 @@ const server = new ApolloServer({
     if (res) {
       console.log("AUTHENTICATED " + JSON.stringify(res));
       // TODO; add user to context
+      let user = await mongo.getUser(res.id, {"posts": false, "votes": false}).then((result) => result);
+      console.log("Context: ", user);
+      return {user: user};
     }
     else {
       console.log("DENIED");
