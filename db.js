@@ -1,7 +1,10 @@
 const MongoClient = require('mongodb').MongoClient;
 const assert = require('assert');
+const fs = require('fs');
 
-const url = 'mongodb+srv://quirkadmin:icdTdIRn7RuNJCM1@cluster0-allgm.mongodb.net/main?retryWrites=true'
+let config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+
+const url = config["MONGO_DB_URL"];
 const dbName = 'main';
 
 function clientWrapper(operation) {
