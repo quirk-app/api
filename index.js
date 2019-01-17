@@ -114,7 +114,11 @@ const resolvers = {
     newUser: (_, { input }) => {
       input.posts = [];
       input.votes = [];
+<<<<<<< HEAD
+      input.username_lower = input.username.toLowerCase(); // unique case-insensitive names
+=======
       input.username_lower = username.toLowerCase(); // unique case-insensitive names
+>>>>>>> 5f94fb7281fa3b1ef4c56df74f90af2c75baf178
 
       return bcrypt.hash(input.password, 10).then((hash)=>{
         // Generated password hash
@@ -124,13 +128,14 @@ const resolvers = {
           (result) => {
             console.log(result);
             if(!result) {
+              console.log(result);
               return mongo.insertDocument("users", input).then(
                 function(addeduser) {
-                  console.log("added user id: " + addeduser._id);
+                  console.log("added user id: " + addeduser.ops[0]._id);
                   return {
                     success: true,
                     token: jwt.sign({
-                      id: addeduser._id
+                      id: addeduser.ops[0]._id
                     }, KEY_1, { expiresIn: '30d', issuer: 'justin\'s BIG 🍆'})
                   };
                 },
