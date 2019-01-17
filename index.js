@@ -1,12 +1,11 @@
 const { ApolloServer, gql } = require('apollo-server');
 const mongo = require('./db.js');
 const bcrypt = require('bcrypt');
-const fs = require('fs');
 const jwt = require('jsonwebtoken');
 
-let config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
-const KEY_1 = config["KEYS"][0];
-const KEY_2 = config["KEYS"][1];
+const config = require('./config.json');
+const KEY_CUR = config["KEYS"][0];
+const KEY_OLD = config["KEYS"][1];
 
 // Type definitions define the "shape" of your data and specify
 // which ways the data can be fetched from the GraphQL server.
@@ -81,6 +80,10 @@ const harambe = {
   votes: [],
 };
 
+function getToken(data) {
+  return jwt.sign(data, KEY_CUR, { expiresIn: '30d', issuer: 'api'});
+}
+
 // Resolvers define the technique for fetching the types in the
 // schema.  We'll retrieve books from the "books" array above.
 const resolvers = {
@@ -95,9 +98,7 @@ const resolvers = {
             if(res) {
               return {
                 success: true,
-                token: jwt.sign({
-                  id: result._id
-                }, KEY_1, { expiresIn: '30d', issuer: 'justin\'s BIG 🍆'})
+                token: getToken({ id: result._id }),
               };
             } else {
               return {success: false, error: "Username or password is incorrect."};
@@ -130,9 +131,7 @@ const resolvers = {
                   console.log("added user id: " + addeduser.ops[0]._id);
                   return {
                     success: true,
-                    token: jwt.sign({
-                      id: addeduser.ops[0]._id
-                    }, KEY_1, { expiresIn: '30d', issuer: 'justin\'s BIG 🍆'})
+                    token: getToken({ id: addeduser.ops[0]._id }),
                   };
                 },
                 function(err) {
@@ -170,9 +169,9 @@ const server = new ApolloServer({
   resolvers,
   context: ({ req }) => {
     const token = req.headers.authorization || '';
-    let res = verify(token, KEY_1) || verify(token, KEY_2);
+    let res = verify(token, KEY_CUR) || verify(token, KEY_OLD);
     console.log(token);
-    
+
     if (res) {
       console.log("AUTHENTICATED " + JSON.stringify(res));
       // TODO; add user to context
