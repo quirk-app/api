@@ -28,7 +28,8 @@ const typeDefs = gql`
   }
   type Post {
     body: String!
-    votes: [Vote]
+    # votes: [Vote]
+    voteByUser: Vote
     up: Int!
     down: Int!
   }
@@ -44,6 +45,11 @@ const typeDefs = gql`
   type Query {
     user: User # Login, get current user info
     login(credentials: LoginInput!): LoginPayload
+    posts(
+      first: Int
+      after: ID!
+    ): PostsConnection!
+    postByID(id: ID!): Post
   }
   input LoginInput {
     username: ID!
@@ -54,8 +60,20 @@ const typeDefs = gql`
     error: String
     token: ID
   }
+  type PostsConnection {
+    totalCount: Int
+    edges: [PostEdge]
+    posts: [Post] # A convenience
+    cursor: ID!
+  }
+  type PostEdge {
+    cursor: ID!
+    post: Post
+  }
   type Mutation {
     newUser(input: NewUserInput!): NewUserPayload
+    createPost(post: CreatePostInput!): CreatePostPayload!
+    updateVote(vote: UpdateVoteInput!): UpdateVotePayload!
   }
   input NewUserInput {
     username: ID!
@@ -68,6 +86,23 @@ const typeDefs = gql`
     success: Boolean!
     error: String
     token: ID
+  }
+  input CreatePostInput {
+    body: String!
+    # TODO tags
+  }
+  type CreatePostPayload {
+    success: Boolean!
+    error: String
+    post: Post
+  }
+  input UpdateVoteInput {
+    postID: ID!
+    choice: Choice!
+  }
+  type UpdateVotePayload {
+    success: Boolean!
+    error: String
   }
 `;
 
@@ -152,6 +187,16 @@ const resolvers = {
 
       // TODO: Error trapping
     },
+    createPost: (obj, { post }, { user }) => {
+      post.votes = [];
+      post.up = 0;
+      post.down = 0;
+      post.poster = user._id;
+      return mongo.updateOne("users", {_id: user._id}, {$push: {posts: post}}).then(
+        (res) => ({success: true, post: post}),
+        (err) => ({success: false, err: err.toString()})
+      );
+    }
   },
 };
 

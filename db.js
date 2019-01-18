@@ -52,24 +52,27 @@ function getUser(db, id, fields) {
   return db.collection("users").findOne({_id: ObjectID(id)}, {projection: fields});
 }
 
+function updateOne(db, table, query, update) {
+  return db.collection(table).updateOne(query, update);
+}
+
 module.exports = {
   insertDocuments: function(table, docs) {
     return clientWrapper((db) => insertDocuments(db, table, docs));
   },
-
   insertDocument: function(table, doc) {
     return clientWrapper((db) => insertDocument(db, table, doc));
   },
-
   findDocuments: function(table, doc) {
     return clientWrapper((db) => findDocuments(db, table, doc));
   },
-
   findOne: function(table, doc) {
     return clientWrapper((db) => findOne(db, table, doc));
   },
-
   getUser: function(id, fields) {
     return clientWrapper((db) => getUser(db, id, fields));
+  },
+  updateOne: function(table, doc, update) {
+    return clientWrapper((db) => updateOne(db, table, doc, update));
   },
 };
