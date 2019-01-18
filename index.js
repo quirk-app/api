@@ -106,15 +106,6 @@ const typeDefs = gql`
   }
 `;
 
-const harambe = {
-  username: "harambe69420",
-  pw: "123456",
-  email: "god@gmail.com",
-  birthday: 1,
-  posts: [],
-  votes: [],
-};
-
 function getToken(data) {
   return jwt.sign(data, KEY_CUR, { expiresIn: '30d', issuer: 'api'});
 }
