@@ -32,6 +32,7 @@ const typeDefs = gql`
     voteByUser: Vote
     up: Int!
     down: Int!
+    posted: Date!
   }
   type Vote {
     user: User!
@@ -183,10 +184,20 @@ const resolvers = {
       post.up = 0;
       post.down = 0;
       post.poster = user._id;
-      return mongo.updateOne("users", {_id: user._id}, {$push: {posts: post}}).then(
-        (res) => ({success: true, post: post}),
-        (err) => ({success: false, err: err.toString()})
+      post.posted = Date.now();
+      return mongo.insertDocument("posts", post).then(
+        (postInserted) => {
+          console.log(postInserted.ops[0]);
+          return mongo.updateOne("users", {_id: user._id}, {$push: {posts: postInserted.ops[0]._id}}).then(
+            (res) => ({success: true, post: postInserted.ops[0]}),
+            (err) => ({success: true, err: "WAS NOT ABLE TO STORE POST TO USER.", post: postInserted.ops[0]})
+          );
+        },
+        (err) => {
+          return {success: false, err: `Server error: ${err}`};
+        }
       );
+
     }
   },
 };
