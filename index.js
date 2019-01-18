@@ -11,6 +11,7 @@ const KEY_OLD = config["KEYS"][1];
 // which ways the data can be fetched from the GraphQL server.
 const typeDefs = gql`
   type User {
+    id: ID!
     username: ID!
     email: String!
     gender: Gender
@@ -27,6 +28,7 @@ const typeDefs = gql`
     OTHER
   }
   type Post {
+    id: ID!
     body: String!
     # votes: [Vote]
     voteByUser: Vote
@@ -200,6 +202,12 @@ const resolvers = {
 
     }
   },
+  Post: {
+    id: (obj) => obj._id.toString()
+  },
+  User: {
+    id: (obj) => obj._id.toString()
+  }
 };
 
 function verify(token, key) {
