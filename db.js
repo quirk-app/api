@@ -69,4 +69,7 @@ module.exports = {
   findOneAndUpdate: function(table, doc, update, options) {
     return clientWrapper((db) => db.collection(table).findOneAndUpdate(doc, update, options));
   },
+  bulkWrite: function(table, operations) {
+    return clientWrapper((db) => db.collection(table).bulkWrite(operations));
+  }
 };

@@ -27,7 +27,8 @@ const typeDefs = gql`
     gender: Gender
     birthday: Date!
     posts: [Post!]!
-    votes: [Vote!]!
+    upvotes: [Vote!]!
+    downvotes: [Vote!]!
   }
 
   scalar Date
@@ -41,10 +42,9 @@ const typeDefs = gql`
   type Post {
     id: ID!
     body: String!
-    # votes: [Vote]
+    upvotes: [Vote!]!
+    downvotes: [Vote!]!
     voteByUser: Vote
-    up: Int!
-    down: Int!
     posted: Time!
   }
   type Vote {
@@ -164,7 +164,8 @@ const resolvers = {
   Mutation: {
     newUser: (obj, { input }) => {
       input.posts = [];
-      input.votes = [];
+      input.upvotes = [];
+      input.downvotes = [];
       input.username_lower = input.username.toLowerCase(); // unique case-insensitive names
 
       return bcrypt.hash(input.password, 10).then((hash)=>{
@@ -200,9 +201,8 @@ const resolvers = {
       // TODO: Error trapping
     },
     createPost: (obj, { post }, { user }) => {
-      post.votes = [];
-      post.up = 0;
-      post.down = 0;
+      post.upvotes = [];
+      post.downvotes = [];
       post.poster = user._id;
       post.posted = Date.now();
       return mongo.insertOne("posts", post).then(
@@ -233,10 +233,9 @@ const resolvers = {
     type Post {
     id: ID!
     body: String!
-    # votes: [Vote]
+    upvotes: [Vote!]!
+    downvotes: [Vote!]!
     voteByUser: Vote
-    up: Int!
-    down: Int!
     posted: Date!
   }
   type Vote {
@@ -256,11 +255,11 @@ const resolvers = {
     gender: Gender
     birthday: Date!
     posts: [Post!]!
-    votes: [Vote!]!
+    upvotes: [Vote!]!
+    downvotes: [Vote!]!
   }
     */
     updateVote: (obj, { vote }, { user }) => {
-      // TODO: need to check if user already voted
       if(!user) return null;
 
       let voteObj = {
@@ -268,42 +267,37 @@ const resolvers = {
         post: ObjectID(vote.postID),
         choice: vote.choice
       };
-      return mongo.findOne("users", {_id: user._id, votes: {$elemMatch: {post: voteObj.post}}}, {projection: {"votes.$": 1}}).then(
+
+      let voteAction = {};
+      voteAction[voteObj.choice.toLowerCase() + 's'] = voteObj;
+
+      return mongo.bulkWrite("users", [
+        { updateOne: {
+          filter: {_id: user._id},
+          update: {$pull: {upvotes: {post: voteObj.post}, downvotes: {post: voteObj.post}}}
+        }},
+        { updateOne: {
+          filter: {_id: user._id},
+          update: {$push: voteAction}
+        }}
+      ]).then(
         res => {
-          console.log("foau", res);
-          if(res) {
-
-          } else {
-
-          }
-          return mongo.updateOne("users", {_id: user._id}, {$push: {votes: voteObj}}, {projection: {"votes.$": 1}}).then(
-            insertedVote => {
-              let userUpvoted = (voteObj.choice === 'UPVOTE' ? 1 : 0);
-              let userDownvoted = (voteObj.choice === 'DOWNVOTE' ? 1 : 0);
-              return mongo.updateOne("posts", {_id: ObjectID(voteObj.post)}, {$inc: {up: userUpvoted, down: userDownvoted}, $push: {votes: voteObj}}).then(
-                res => {console.log(res); return {success: true, error: `${res}`};},
-                err => ({success: false, error: `Couldn't update vote on post: ${err}`})
-              );
-            },
-            err => ({success: false, error: `Couldn't update user votes: ${err}`})
+          return mongo.bulkWrite("posts", [
+            { updateOne: {
+              filter: {_id: ObjectID(voteObj.post)},
+              update: {$pull: {upvotes: {user: voteObj.user}, downvotes: {user: voteObj.user}}}
+            }},
+            { updateOne: {
+              filter: {_id: ObjectID(voteObj.post)},
+              update: {$push: voteAction}
+            }}
+          ]).then(
+            res2 => ({success: true}),
+            err => ({success: false, error: `Couldn't update post votes: ${err}`})
           );
         },
-        err => {
-          console.log(err);
-          return {success: false, error: err.toString()};
-        }
+        err => ({success: false, error: `Couldn't update user votes: ${err}`})
       );
-      // return mongo.updateOne("users", {_id: user._id}, {$push: {votes: voteObj}}).then(
-      //   insertedVote => {
-      //     let userUpvoted = (voteObj.choice === 'UPVOTE' ? 1 : 0);
-      //     let userDownvoted = (voteObj.choice === 'DOWNVOTE' ? 1 : 0);
-      //     return mongo.updateOne("posts", {_id: ObjectID(voteObj.post)}, {$inc: {up: userUpvoted, down: userDownvoted}, $push: {votes: voteObj}}).then(
-      //       res => {console.log(res); return {success: true, error: `${res}`};},
-      //       err => ({success: false, error: `Couldn't update vote on post: ${err}`})
-      //     );
-      //   },
-      //   err => ({success: false, error: `Couldn't update user votes: ${err}`})
-      // );
     }
   },
   Post: {
