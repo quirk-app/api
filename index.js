@@ -1,4 +1,4 @@
-const { ApolloServer, gql } = require('apollo-server');
+const { ApolloServer, gql, AuthenticationError } = require('apollo-server');
 const { ObjectID } = require('mongodb');
 const mongo = require('./db.js');
 const bcrypt = require('bcrypt');
@@ -17,8 +17,13 @@ const typeDefs = gql`
     posts(
       first: Int
       skip: Int
-    ): PostsConnection
+    ): PostsConnection!
     postByID(id: ID!): Post
+  }
+  type Mutation {
+    newUser(input: NewUserInput!): NewUserPayload
+    createPost(post: CreatePostInput!): CreatePostPayload!
+    updateVote(vote: UpdateVoteInput!): UpdateVotePayload!
   }
   type User {
     id: ID!
@@ -67,19 +72,14 @@ const typeDefs = gql`
   }
   type PostsConnection {
     totalCount: Int
-    edges: [PostEdge]
     posts: [Post] # A convenience
-    cursor: ID!
   }
   type PostEdge {
     cursor: ID!
     post: Post
   }
-  type Mutation {
-    newUser(input: NewUserInput!): NewUserPayload
-    createPost(post: CreatePostInput!): CreatePostPayload!
-    updateVote(vote: UpdateVoteInput!): UpdateVotePayload!
-  }
+
+  # Mutation stuffs
   input NewUserInput {
     username: ID!
     password: ID!
@@ -121,7 +121,7 @@ function getToken(data) {
 const resolvers = {
   Query: {
     user: (obj, args, {user}) => {
-      if(!user) return null;
+      if(!user) throw new AuthenticationError("You must be logged in!");
       return user;
     },
     login: (obj, { credentials }) => {
@@ -145,18 +145,18 @@ const resolvers = {
         }
       );
     },
-    posts: (obj, args, {user}) => {
+    posts: (obj, args, {user}) => { // Do something with user
       let opt = {};
       if(args.first) opt.limit = args.first;
       if(args.skip) opt.skip = args.skip;
       return mongo.find("posts", {}, opt).then(
         (res) => {
           console.log(res);
-          return {posts: res};
+          return {totalCount: res.length, posts: res};
         },
         (err) => {
           console.log(err); // TODO: Add error
-          return null;
+          return {totalCount: 0};
         }
       );
     },
@@ -201,6 +201,8 @@ const resolvers = {
       // TODO: Error trapping
     },
     createPost: (obj, { post }, { user }) => {
+      if(!user) throw new AuthenticationError("You must be logged in!");
+
       post.upvotes = [];
       post.downvotes = [];
       post.poster = user._id;
@@ -220,7 +222,7 @@ const resolvers = {
 
     },
     updateVote: (obj, { vote }, { user }) => {
-      if(!user) return null;
+      if(!user) throw new AuthenticationError("You must be logged in!");
 
       let voteObj = {
         user: user._id,
@@ -291,7 +293,8 @@ const server = new ApolloServer({
     if (res) {
       console.log("AUTHENTICATED " + JSON.stringify(res));
       // TODO; add user to context
-      let user = await mongo.getUser(res.id, {"posts": false, "votes": false}).then((result) => result);
+      let user = await mongo.getUser(res.id, {"posts": false, "votes": false}).then((result) => result, _ => null);
+      if(!user) return null;
       console.log("Context: ", user);
       return {user: user};
     }
