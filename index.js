@@ -252,7 +252,7 @@ const resolvers = {
               update: {$push: voteAction}
             }}
           ]).then(
-            res2 => ({success: true}),
+            res2 => ({success: true, vote: voteObj}),
             err => ({success: false, error: `Couldn't update post votes: ${err}`})
           );
         },
