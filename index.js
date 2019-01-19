@@ -176,7 +176,7 @@ const resolvers = {
             console.log(result);
             if(!result) {
               console.log(result);
-              return mongo.insertDocument("users", input).then(
+              return mongo.insertOne("users", input).then(
                 function(addeduser) {
                   console.log("added user id: " + addeduser.ops[0]._id);
                   return {
@@ -205,7 +205,7 @@ const resolvers = {
       post.down = 0;
       post.poster = user._id;
       post.posted = Date.now();
-      return mongo.insertDocument("posts", post).then(
+      return mongo.insertOne("posts", post).then(
         (postInserted) => {
           console.log(postInserted.ops[0]);
           return mongo.updateOne("users", {_id: user._id}, {$push: {posts: postInserted.ops[0]._id}}).then(
@@ -261,24 +261,49 @@ const resolvers = {
     */
     updateVote: (obj, { vote }, { user }) => {
       // TODO: need to check if user already voted
+      if(!user) return null;
 
       let voteObj = {
         user: user._id,
-        post: vote.postID,
+        post: ObjectID(vote.postID),
         choice: vote.choice
       };
+      return mongo.findOne("users", {_id: user._id, votes: {$elemMatch: {post: voteObj.post}}}, {projection: {"votes.$": 1}}).then(
+        res => {
+          console.log("foau", res);
+          if(res) {
 
-      return mongo.updateOne("users", {_id: user._id}, {$push: {votes: voteObj}}).then(
-        insertedVote => {
-          let userUpvoted = (voteObj.choice === 'UPVOTE' ? 1 : 0);
-          let userDownvoted = (voteObj.choice === 'DOWNVOTE' ? 1 : 0);
-          return mongo.updateOne("posts", {_id: ObjectID(voteObj.post)}, {$inc: {up: userUpvoted, down: userDownvoted}, $push: {votes: voteObj}}).then(
-            res => ({success: true, error: `${res}`}),
-            err => ({success: false, error: `Couldn't update vote on post: ${err}`})
+          } else {
+
+          }
+          return mongo.updateOne("users", {_id: user._id}, {$push: {votes: voteObj}}, {projection: {"votes.$": 1}}).then(
+            insertedVote => {
+              let userUpvoted = (voteObj.choice === 'UPVOTE' ? 1 : 0);
+              let userDownvoted = (voteObj.choice === 'DOWNVOTE' ? 1 : 0);
+              return mongo.updateOne("posts", {_id: ObjectID(voteObj.post)}, {$inc: {up: userUpvoted, down: userDownvoted}, $push: {votes: voteObj}}).then(
+                res => {console.log(res); return {success: true, error: `${res}`};},
+                err => ({success: false, error: `Couldn't update vote on post: ${err}`})
+              );
+            },
+            err => ({success: false, error: `Couldn't update user votes: ${err}`})
           );
         },
-        err => ({success: false, error: `Couldn't update user votes: ${err}`})
+        err => {
+          console.log(err);
+          return {success: false, error: err.toString()};
+        }
       );
+      // return mongo.updateOne("users", {_id: user._id}, {$push: {votes: voteObj}}).then(
+      //   insertedVote => {
+      //     let userUpvoted = (voteObj.choice === 'UPVOTE' ? 1 : 0);
+      //     let userDownvoted = (voteObj.choice === 'DOWNVOTE' ? 1 : 0);
+      //     return mongo.updateOne("posts", {_id: ObjectID(voteObj.post)}, {$inc: {up: userUpvoted, down: userDownvoted}, $push: {votes: voteObj}}).then(
+      //       res => {console.log(res); return {success: true, error: `${res}`};},
+      //       err => ({success: false, error: `Couldn't update vote on post: ${err}`})
+      //     );
+      //   },
+      //   err => ({success: false, error: `Couldn't update user votes: ${err}`})
+      // );
     }
   },
   Post: {
