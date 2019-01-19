@@ -160,6 +160,17 @@ const resolvers = {
         }
       );
     },
+    postByID: (obj, {id}, {user}) => {
+      return mongo.findOne("posts", {_id: ObjectID(id)}).then(
+        (res) => {
+          return res;
+        },
+        (err) => {
+          console.log(err);
+          throw err;
+        }
+      );
+    },
   },
   Mutation: {
     newUser: (obj, { input }) => {
