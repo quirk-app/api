@@ -192,14 +192,77 @@ const resolvers = {
           console.log(postInserted.ops[0]);
           return mongo.updateOne("users", {_id: user._id}, {$push: {posts: postInserted.ops[0]._id}}).then(
             (res) => ({success: true, post: postInserted.ops[0]}),
-            (err) => ({success: true, err: "WAS NOT ABLE TO STORE POST TO USER.", post: postInserted.ops[0]})
+            (err) => ({success: true, error: "WAS NOT ABLE TO STORE POST TO USER.", post: postInserted.ops[0]})
           );
         },
         (err) => {
-          return {success: false, err: `Server error: ${err}`};
+          return {success: false, error: `Server error: ${err}`};
         }
       );
 
+    },
+    /*
+    updateVote(vote: UpdateVoteInput!): UpdateVotePayload!
+      input UpdateVoteInput {
+    postID: ID!
+    choice: Choice!
+  }
+  type UpdateVotePayload {
+    success: Boolean!
+    error: String
+  }
+
+    type Post {
+    id: ID!
+    body: String!
+    # votes: [Vote]
+    voteByUser: Vote
+    up: Int!
+    down: Int!
+    posted: Date!
+  }
+  type Vote {
+    user: User!
+    post: Post!
+    choice: Choice!
+  }
+  enum Choice { # Change later
+    UPVOTE
+    DOWNVOTE
+  }
+
+  type User {
+    id: ID!
+    username: ID!
+    email: String!
+    gender: Gender
+    birthday: Date!
+    posts: [Post!]!
+    votes: [Vote!]!
+  }
+    */
+    updateVote: (obj, { vote }, { user }) => {
+      // TODO: need to check if user already voted
+
+      let voteObj = {
+        user: user._id,
+        post: vote.postID,
+        choice: vote.choice
+      };
+
+      return mongo.updateOne("users", {_id: user._id}, {$push: {votes: voteObj}}).then(
+        insertedVote => {
+          let userUpvoted = (voteObj.choice === 'UPVOTE' ? 1 : 0);
+          let userDownvoted = (voteObj.choice === 'DOWNVOTE' ? 1 : 0);
+          return mongo.updateOne("posts", {_id: voteObj.post}, {$inc: {up: userUpvoted, down: userDownvoted}}).then(
+            res => ({success: true}),
+            err => ({success: false, error: `Couldn't update vote on post: ${err}`})
+          );
+        },
+        err => {
+          return {success: false, error: `Couldn't update user votes: ${err}`};
+        }
+      );
     }
   },
   Post: {
