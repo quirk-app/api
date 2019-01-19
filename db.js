@@ -48,6 +48,10 @@ function findOne(db, table, query) {
   return db.collection(table).findOne(query);
 }
 
+function getPost(db, id, fields) {
+  return db.collection("posts").findOne({_id: ObjectID(id)}, {projection: fields});
+}
+
 function getUser(db, id, fields) {
   return db.collection("users").findOne({_id: ObjectID(id)}, {projection: fields});
 }
@@ -71,6 +75,9 @@ module.exports = {
   },
   getUser: function(id, fields) {
     return clientWrapper((db) => getUser(db, id, fields));
+  },
+  getPost: function(id, fields) {
+    return clientWrapper((db) => getPost(db, id, fields));
   },
   updateOne: function(table, doc, update) {
     return clientWrapper((db) => updateOne(db, table, doc, update));

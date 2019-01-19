@@ -1,4 +1,5 @@
 const { ApolloServer, gql } = require('apollo-server');
+const { ObjectID } = require('mongodb');
 const mongo = require('./db.js');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
@@ -254,14 +255,12 @@ const resolvers = {
         insertedVote => {
           let userUpvoted = (voteObj.choice === 'UPVOTE' ? 1 : 0);
           let userDownvoted = (voteObj.choice === 'DOWNVOTE' ? 1 : 0);
-          return mongo.updateOne("posts", {_id: voteObj.post}, {$inc: {up: userUpvoted, down: userDownvoted}}).then(
-            res => ({success: true}),
+          return mongo.updateOne("posts", {_id: ObjectID(voteObj.post)}, {$inc: {up: userUpvoted, down: userDownvoted}, $push: {votes: voteObj}}).then(
+            res => ({success: true, error: `${res}`}),
             err => ({success: false, error: `Couldn't update vote on post: ${err}`})
           );
         },
-        err => {
-          return {success: false, error: `Couldn't update user votes: ${err}`};
-        }
+        err => ({success: false, error: `Couldn't update user votes: ${err}`})
       );
     }
   },
