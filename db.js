@@ -32,20 +32,8 @@ function clientWrapper(operation) {
   });
 }
 
-function insertDocuments(db, table, docs) {
-  return db.collection(table).insertMany(docs);
-}
-
-function insertDocument(db, table, doc) {
-  return db.collection(table).insertOne(doc);
-}
-
 function find(db, table, query, options) {
   return db.collection(table).find(query, options).toArray();
-}
-
-function findOne(db, table, query, options) {
-  return db.collection(table).findOne(query, options);
 }
 
 function getPost(db, id, fields) {
@@ -56,22 +44,18 @@ function getUser(db, id, fields) {
   return db.collection("users").findOne({_id: ObjectID(id)}, {projection: fields});
 }
 
-function updateOne(db, table, query, update) {
-  return db.collection(table).updateOne(query, update);
-}
-
 module.exports = {
-  insertDocuments: function(table, docs) {
-    return clientWrapper((db) => insertDocuments(db, table, docs));
+  insertMany: function(table, docs, options) {
+    return clientWrapper((db) => db.collection(table).insertMany(docs, options));
   },
-  insertDocument: function(table, doc) {
-    return clientWrapper((db) => insertDocument(db, table, doc));
+  insertOne: function(table, doc, options) {
+    return clientWrapper((db) => db.collection(table).insertOne(doc, options));
   },
   find: function(table, doc, options) {
     return clientWrapper((db) => find(db, table, doc, options));
   },
-  findOne: function(table, doc) {
-    return clientWrapper((db) => findOne(db, table, doc));
+  findOne: function(table, doc, options) {
+    return clientWrapper((db) => db.collection(table).findOne(doc, options));
   },
   getUser: function(id, fields) {
     return clientWrapper((db) => getUser(db, id, fields));
@@ -79,7 +63,10 @@ module.exports = {
   getPost: function(id, fields) {
     return clientWrapper((db) => getPost(db, id, fields));
   },
-  updateOne: function(table, doc, update) {
-    return clientWrapper((db) => updateOne(db, table, doc, update));
+  updateOne: function(table, doc, update, options) {
+    return clientWrapper((db) => db.collection(table).updateOne(doc, update, options));
+  },
+  findOneAndUpdate: function(table, doc, update, options) {
+    return clientWrapper((db) => db.collection(table).findOneAndUpdate(doc, update, options));
   },
 };
