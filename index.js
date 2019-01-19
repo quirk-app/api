@@ -10,6 +10,15 @@ const KEY_OLD = config["KEYS"][1];
 // Type definitions define the "shape" of your data and specify
 // which ways the data can be fetched from the GraphQL server.
 const typeDefs = gql`
+  type Query {
+    user: User # Login, get current user info
+    login(credentials: LoginInput!): LoginPayload
+    posts(
+      first: Int
+      skip: Int
+    ): PostsConnection
+    postByID(id: ID!): Post
+  }
   type User {
     id: ID!
     username: ID!
@@ -21,6 +30,7 @@ const typeDefs = gql`
   }
 
   scalar Date
+  scalar Time
 
   enum Gender {
     MALE
@@ -34,7 +44,7 @@ const typeDefs = gql`
     voteByUser: Vote
     up: Int!
     down: Int!
-    posted: Date!
+    posted: Time!
   }
   type Vote {
     user: User!
@@ -44,15 +54,6 @@ const typeDefs = gql`
   enum Choice { # Change later
     UPVOTE
     DOWNVOTE
-  }
-  type Query {
-    user: User # Login, get current user info
-    login(credentials: LoginInput!): LoginPayload
-    posts(
-      first: Int
-      after: ID!
-    ): PostsConnection!
-    postByID(id: ID!): Post
   }
   input LoginInput {
     username: ID!
@@ -106,6 +107,7 @@ const typeDefs = gql`
   type UpdateVotePayload {
     success: Boolean!
     error: String
+    vote: Vote
   }
 `;
 
@@ -141,7 +143,22 @@ const resolvers = {
           return {success: false, error: "Error encountered when attempting to login. Try again later."};
         }
       );
-    }
+    },
+    posts: (obj, args, {user}) => {
+      let opt = {};
+      if(args.first) opt.limit = args.first;
+      if(args.skip) opt.skip = args.skip;
+      return mongo.find("posts", {}, opt).then(
+        (res) => {
+          console.log(res);
+          return {posts: res};
+        },
+        (err) => {
+          console.log(err); // TODO: Add error
+          return null;
+        }
+      );
+    },
   },
   Mutation: {
     newUser: (obj, { input }) => {

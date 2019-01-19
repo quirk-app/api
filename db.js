@@ -40,12 +40,12 @@ function insertDocument(db, table, doc) {
   return db.collection(table).insertOne(doc);
 }
 
-function find(db, table, query) {
-  return db.collection(table).find(query);
+function find(db, table, query, options) {
+  return db.collection(table).find(query, options).toArray();
 }
 
-function findOne(db, table, query) {
-  return db.collection(table).findOne(query);
+function findOne(db, table, query, options) {
+  return db.collection(table).findOne(query, options);
 }
 
 function getUser(db, id, fields) {
@@ -63,8 +63,8 @@ module.exports = {
   insertDocument: function(table, doc) {
     return clientWrapper((db) => insertDocument(db, table, doc));
   },
-  findDocuments: function(table, doc) {
-    return clientWrapper((db) => findDocuments(db, table, doc));
+  find: function(table, doc, options) {
+    return clientWrapper((db) => find(db, table, doc, options));
   },
   findOne: function(table, doc) {
     return clientWrapper((db) => findOne(db, table, doc));
