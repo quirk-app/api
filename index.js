@@ -219,46 +219,6 @@ const resolvers = {
       );
 
     },
-    /*
-    updateVote(vote: UpdateVoteInput!): UpdateVotePayload!
-      input UpdateVoteInput {
-    postID: ID!
-    choice: Choice!
-  }
-  type UpdateVotePayload {
-    success: Boolean!
-    error: String
-  }
-
-    type Post {
-    id: ID!
-    body: String!
-    upvotes: [Vote!]!
-    downvotes: [Vote!]!
-    voteByUser: Vote
-    posted: Date!
-  }
-  type Vote {
-    user: User!
-    post: Post!
-    choice: Choice!
-  }
-  enum Choice { # Change later
-    UPVOTE
-    DOWNVOTE
-  }
-
-  type User {
-    id: ID!
-    username: ID!
-    email: String!
-    gender: Gender
-    birthday: Date!
-    posts: [Post!]!
-    upvotes: [Vote!]!
-    downvotes: [Vote!]!
-  }
-    */
     updateVote: (obj, { vote }, { user }) => {
       if(!user) return null;
 
