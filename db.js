@@ -71,5 +71,8 @@ module.exports = {
   },
   bulkWrite: function(table, operations) {
     return clientWrapper((db) => db.collection(table).bulkWrite(operations));
+  },
+  countDocuments: function(table, query, options) {
+    return clientWrapper((db) => db.collection(table).countDocuments(query, options));
   }
 };

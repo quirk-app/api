@@ -163,6 +163,38 @@ const resolvers = {
     postByID: (obj, {id}, {user}) => {
       return mongo.findOne("posts", {_id: ObjectID(id)}).then(
         (res) => {
+          let voteRes = {
+            user: user._id,
+            post: ObjectID(id),
+            choice: undefined
+          };
+
+          mongo.countDocuments("users", {_id: user._id, 'upvotes.post': ObjectID(id)}).then(
+            upvoted => {
+              if (upvoted) {
+                voteRes.choice = 'UPVOTE';
+                console.log("USER UPVOTED");
+              }
+              else {
+                mongo.countDocuments("users", {_id: user._id, 'downvotes.post': ObjectID(id)}).then(
+                  downvoted => {
+                    if (downvoted) {
+                      voteRes.choice = 'DOWNVOTE';
+                      console.log("USER DOWNVOTED");
+                    }
+                  },
+                  err => ({success: false, err: `Couldn't retrieve user downvotes: ${err}`})
+                );
+              }
+            },
+            err => ({success: false, err: `Couldn't retrieve user upvotes: ${err}`})
+          );
+          
+          if (voteRes.choice) {
+            res.voteByUser = voteRes;
+          }
+
+          console.log("returned " + JSON.stringify(res));
           return res;
         },
         (err) => {
