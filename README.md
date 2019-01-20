@@ -20,6 +20,8 @@ Within mongodb, whitelist your IP so that the api can access the database.
 ### Structure
 The main parts of the api such as resolvers are in `index.js`. The database wrappers are in `db.js`.
 
+The schema has been moved to `schema.graphql`.
+
 ### Testing
 Run the program with `node index.js`.
 

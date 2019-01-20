@@ -1,0 +1,99 @@
+type Query {
+  user: User # Login, get current user info
+  login(credentials: LoginInput!): LoginPayload
+  posts(
+    first: Int
+    skip: Int
+  ): PostsConnection!
+  postByID(id: ID!): Post
+}
+type Mutation {
+  newUser(input: NewUserInput!): NewUserPayload
+  createPost(post: CreatePostInput!): CreatePostPayload!
+  updateVote(vote: UpdateVoteInput!): UpdateVotePayload!
+}
+type User {
+  id: ID!
+  username: ID!
+  email: String!
+  gender: Gender
+  birthday: Date!
+  posts: [Post!]!
+  upvotes: [Vote!]!
+  downvotes: [Vote!]!
+}
+
+scalar Date
+scalar Time
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+type Post {
+  id: ID!
+  body: String!
+  upvotes: [Vote!]!
+  downvotes: [Vote!]!
+  voteByUser: Vote
+  posted: Time!
+}
+type Vote {
+  user: User!
+  post: Post!
+  choice: Choice!
+}
+enum Choice { # Change later
+  UPVOTE
+  DOWNVOTE
+}
+input LoginInput {
+  username: ID!
+  password: ID!
+}
+type LoginPayload {
+  success: Boolean!
+  error: String
+  token: ID
+}
+type PostsConnection {
+  totalCount: Int
+  posts: [Post] # A convenience
+}
+type PostEdge {
+  cursor: ID!
+  post: Post
+}
+
+# Mutation stuffs
+input NewUserInput {
+  username: ID!
+  password: ID!
+  email: String!
+  gender: Gender
+  birthday: Date!
+}
+type NewUserPayload {
+  success: Boolean!
+  error: String
+  token: ID
+}
+input CreatePostInput {
+  body: String!
+  # TODO tags
+}
+type CreatePostPayload {
+  success: Boolean!
+  error: String
+  post: Post
+}
+input UpdateVoteInput {
+  postID: ID!
+  choice: Choice!
+}
+type UpdateVotePayload {
+  success: Boolean!
+  error: String
+  vote: Vote
+}
