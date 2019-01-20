@@ -1,7 +1,10 @@
-const MongoClient = require('mongodb').MongoClient;
+const {MongoClient, ObjectID} = require('mongodb');
 const assert = require('assert');
+const fs = require('fs');
 
-const url = 'mongodb+srv://quirkadmin:icdTdIRn7RuNJCM1@cluster0-allgm.mongodb.net/main?retryWrites=true'
+let config = JSON.parse(fs.readFileSync('config.json', 'utf8'));
+
+const url = config["MONGO_DB_URL"];
 const dbName = 'main';
 
 function clientWrapper(operation) {
@@ -29,36 +32,47 @@ function clientWrapper(operation) {
   });
 }
 
-function insertDocuments(db, table, docs) {
-  return db.collection(table).insertMany(docs);
+function find(db, table, query, options) {
+  return db.collection(table).find(query, options).toArray();
 }
 
-function insertDocument(db, table, doc) {
-  return db.collection(table).insertOne(doc);
+function getPost(db, id, fields) {
+  return db.collection("posts").findOne({_id: ObjectID(id)}, {projection: fields});
 }
 
-function find(db, table, query) {
-  return db.collection(table).find(query);
-}
-
-function findOne(db, table, query) {
-  return db.collection(table).findOne(query);
+function getUser(db, id, fields) {
+  return db.collection("users").findOne({_id: ObjectID(id)}, {projection: fields});
 }
 
 module.exports = {
-  insertDocuments: function(table, docs) {
-    return clientWrapper((db) => insertDocuments(db, table, docs));
+  insertMany: function(table, docs, options) {
+    return clientWrapper((db) => db.collection(table).insertMany(docs, options));
   },
-
-  insertDocument: function(table, doc) {
-    return clientWrapper((db) => insertDocument(db, table, doc));
+  insertOne: function(table, doc, options) {
+    return clientWrapper((db) => db.collection(table).insertOne(doc, options));
   },
-
-  findDocuments: function(table, doc) {
-    return clientWrapper((db) => findDocuments(db, table, doc));
+  find: function(table, doc, options) {
+    return clientWrapper((db) => find(db, table, doc, options));
   },
-
-  findOne: function(table, doc) {
-    return clientWrapper((db) => findOne(db, table, doc));
+  findOne: function(table, doc, options) {
+    return clientWrapper((db) => db.collection(table).findOne(doc, options));
   },
+  getUser: function(id, fields) {
+    return clientWrapper((db) => getUser(db, id, fields));
+  },
+  getPost: function(id, fields) {
+    return clientWrapper((db) => getPost(db, id, fields));
+  },
+  updateOne: function(table, doc, update, options) {
+    return clientWrapper((db) => db.collection(table).updateOne(doc, update, options));
+  },
+  findOneAndUpdate: function(table, doc, update, options) {
+    return clientWrapper((db) => db.collection(table).findOneAndUpdate(doc, update, options));
+  },
+  bulkWrite: function(table, operations) {
+    return clientWrapper((db) => db.collection(table).bulkWrite(operations));
+  },
+  countDocuments: function(table, query, options) {
+    return clientWrapper((db) => db.collection(table).countDocuments(query, options));
+  }
 };
