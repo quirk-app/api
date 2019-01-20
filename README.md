@@ -1,5 +1,5 @@
 # api
-internal GraphQL API endpoint for platform.
+Internal GraphQL API endpoint for platform.
 
 ## Getting started
 
@@ -13,6 +13,7 @@ The current list of dependencies is listed below, however, you can install them 
 - `graphql` - supporting tools for graphql
 - `mongodb` - to access the database
 - `bcrypt` - password encryption
+- `jsonwebtoken` - used for authentication in issuing tokens.
 
 Within mongodb, whitelist your IP so that the api can access the database.
 
@@ -21,3 +22,5 @@ The main parts of the api such as resolvers are in `index.js`. The database wrap
 
 ### Testing
 Run the program with `node index.js`.
+
+This will create run the server on `localhost:4000`.
