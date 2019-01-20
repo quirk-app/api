@@ -163,38 +163,7 @@ const resolvers = {
     postByID: (obj, {id}, {user}) => {
       return mongo.findOne("posts", {_id: ObjectID(id)}).then(
         (res) => {
-          if (!res)
-            return undefined;
-
-          let voteRes = {
-            user: user._id,
-            post: ObjectID(id),
-            choice: undefined
-          };
-
-          return mongo.countDocuments("users", {_id: user._id, 'upvotes.post': ObjectID(id)}).then(
-            upvoted => {
-              if (upvoted) {
-                voteRes.choice = 'UPVOTE';
-                res.voteByUser = voteRes;
-                return res;
-              }
-              else {
-                return mongo.countDocuments("users", {_id: user._id, 'downvotes.post': ObjectID(id)}).then(
-                  downvoted => {
-                    if (downvoted) {
-                      voteRes.choice = 'DOWNVOTE';
-                      res.voteByUser = voteRes;
-                    }
-
-                    return res;
-                  },
-                  err => ({success: false, error: `Couldn't retrieve user downvotes: ${err}`})
-                );
-              }
-            },
-            err => ({success: false, error: `Couldn't retrieve user upvotes: ${err}`})
-          );
+          return res;
         },
         (err) => {
           console.log(err);
@@ -304,12 +273,59 @@ const resolvers = {
       );
     }
   },
-  Post: {
-    id: (obj) => obj._id.toString()
-  },
   User: {
     id: (obj) => obj._id.toString()
-  }
+  },
+  Post: {
+    id: (obj) => obj._id.toString(),
+    voteByUser: (obj, args, {user}) => {
+      if(!user) throw new AuthenticationError("You must be logged in!");
+
+      console.log(obj);
+      return mongo.findOne("posts", {_id: obj._id}, {projection: {upvoted: 0, downvoted: 0}}).then(
+        (res) => {
+          if (!res) return undefined;
+
+          let voteRes = {
+            user: user._id,
+            post: obj._id,
+            choice: undefined
+          };
+
+          return mongo.countDocuments("users", {_id: user._id, 'upvotes.post': obj._id}).then(
+            upvoted => {
+              if (upvoted) {
+                voteRes.choice = 'UPVOTE';
+                return voteRes;
+              }
+              else {
+                return mongo.countDocuments("users", {_id: user._id, 'downvotes.post': obj._id}).then(
+                  downvoted => {
+                    if (downvoted) {
+                      voteRes.choice = 'DOWNVOTE';
+                    }
+                    return voteRes;
+                  },
+                  err => {
+                    console.log(err);
+                    throw err;
+                  }
+                );
+              }
+            },
+            (err) => {
+              console.log(err);
+              throw err;
+            }
+          );
+        },
+        (err) => {
+          console.log(err);
+          throw err;
+        }
+      );
+    },
+  },
 };
 
 function verify(token, key) {
