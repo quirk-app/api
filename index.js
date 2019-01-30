@@ -8,6 +8,8 @@ const config = require('./config.json');
 const KEY_CUR = config["KEYS"][0];
 const KEY_OLD = config["KEYS"][1];
 
+const getDataLoaders = require('./dataloaders.js');
+
 // Type definitions define the "shape" of your data and specify
 // which ways the data can be fetched from the GraphQL server.
 const typeDefs = gql(require('fs').readFileSync('schema.graphql', 'utf8'));
@@ -244,6 +246,9 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   context: async ({ req }) => {
+    let ctx = {};
+    ctx.dataloaders = await getDataLoaders(config.MONGO_DB_URL, 'main');
+
     const token = req.headers.authorization || '';
     let res = verify(token, KEY_CUR) || verify(token, KEY_OLD);
     console.log(token);
@@ -251,14 +256,15 @@ const server = new ApolloServer({
     if (res) {
       console.log("AUTHENTICATED " + JSON.stringify(res));
       // TODO; add user to context
-      let user = await mongo.getUser(res.id, {"posts": false, "votes": false}).then((result) => result, _ => null);
-      if(!user) return null;
-      console.log("Context: ", user);
-      return {user: user};
+      let user = await ctx.dataloaders.users.load(res.id);
+      console.log(user);
+      if(user) ctx.user = user;
     }
     else {
       console.log("DENIED");
     }
+
+    return ctx;
   }
 });
 
